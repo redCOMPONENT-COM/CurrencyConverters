@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project name="currencyconverters" default="site" basedir=".">
+
+	<target name="site" depends="init, plugins" description="Do a full build"/>
+
+	<!-- Do initialization stuff -->
+	<target name="init">
+		<property file="build.properties" override="true"/>
+		<property name="src" value="./"/>
+	</target>
+
+	<target name="plugins" description="Copies files to a existing joomla site">
+		<echo message="---------------- || PLUGINS || ----------------"/>
+
+		<!-- Plugins -->
+		<copy todir="${www.dir}/plugins/currencyconverter" overwrite="true">
+			<fileset dir="${src}/plugins">
+				<include name="**"/>
+			</fileset>
+		</copy>
+	</target>
+</project>

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<extension version="2.5" type="plugin" group="currencyconverter">
+	<name>PLG_CURRENCYCONVERTER_WEBSERVICEX</name>
+	<author>redCOMPONENT</author>
+	<creationDate>November 2013</creationDate>
+	<copyright>Copyright (C) 2013 redCOMPONENT.com. All rights reserved.</copyright>
+	<license>GNU General Public License version 2 or later; see LICENSE.txt</license>
+	<authorEmail>email@redcomponent.com</authorEmail>
+	<authorUrl>www.redcomponent.com</authorUrl>
+	<version>1.0.0</version>
+	<description>PLG_CURRENCYCONVERTER_WEBSERVICEX_XML_DESCRIPTION</description>
+
+	<files>
+		<folder>language</folder>
+		<filename plugin="webservicex">webservicex.php</filename>
+	</files>
+
+	<config>
+		<fields name="params">
+			<fieldset name="basic">
+				<field
+					name="caching"
+					type="text"
+					label="PLG_CURRENCYCONVERTER_WEBSERVICEX_PARAMETERS_XML_CACHING"
+					description="PLG_CURRENCYCONVERTER_WEBSERVICEX_PARAMETERS_XML_CACHING_DESC"
+					default="0"
+					/>
+			</fieldset>
+		</fields>
+	</config>
+
+</extension>
