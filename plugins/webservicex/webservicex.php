@@ -35,6 +35,39 @@ class PlgCurrencyConverterWebservicex extends JPlugin
 	 */
 	public function onCurrencyConvert($amount, $currencyFrom, $currencyTo, &$res)
 	{
+		$redcoreLoader = JPATH_LIBRARIES . '/redcore/bootstrap.php';
+
+		if (file_exists($redcoreLoader) && !class_exists('Inflector'))
+		{
+			require_once $redcoreLoader;
+
+			// For Joomla! 2.5 compatibility we add some core functions
+			if (version_compare(JVERSION, '3.0', '<'))
+			{
+				RLoader::registerPrefix('J',  JPATH_LIBRARIES . '/redcore/joomla', false, true);
+			}
+
+			// Do the checks
+			$valid = RHelperCurrency::isValid($currencyFrom);
+
+			if (!$valid)
+			{
+				throw new Exception(sprintf('Missing or invalid currency code to convert from (%s)', $currencyFrom));
+			}
+
+			$valid = RHelperCurrency::isValid($currencyTo);
+
+			if (!$valid)
+			{
+				throw new Exception(sprintf('Missing or invalid currency code to convert to (%s)', $currencyTo));
+			}
+		}
+		else
+		{
+			$app = JFactory::getApplication();
+			$app->enqueueMessage('Currency converter skipping checks - install redCORE library to enable code checking');
+		}
+
 		if (!$currencyFrom)
 		{
 			throw new Exception('Missing currency source for conversion');
