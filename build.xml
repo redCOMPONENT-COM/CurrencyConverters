@@ -1,6 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project name="currencyconverters" default="site" basedir=".">
 
+	<!-- Default properties, set only if not already assigned in the build.properties file -->
+	<property name="dirs.root" value="." />
+	<property name="dirs.release" value="release" />
+	<property name="dirs.tmp" value="tmp" />
+
 	<target name="site" depends="init, plugins" description="Do a full build"/>
 
 	<!-- Do initialization stuff -->
@@ -18,5 +23,43 @@
 				<include name="**"/>
 			</fileset>
 		</copy>
+	</target>
+
+	<target name="release" description="Zip and release">
+
+		<delete dir="${dirs.release}" quiet="yes" includeemptydirs="false" />
+		<mkdir dir="${dirs.release}" />
+
+		<echo message="---------------- || PLUGINS || ----------------"/>
+
+		<!-- site modules -->
+		<foreach param="dirname" absparam="absname" target="zipfolder">
+			<property name="myp" value="" />
+			<property name="prefix" value="" />
+			<fileset dir="${dirs.root}/plugins">
+				<type type="dir"/>
+				<depth max="0" min="0" />
+			</fileset>
+		</foreach>
+
+		<delete dir="${dirs.tmp}" quiet="yes" includeemptydirs="false" />
+	</target>
+
+	<target name="zipfolder">
+		<echo msg="packaging ${dirname} ${absname}" />
+		<copy todir="${dirs.tmp}/${myp}/${dirname}" >
+			<fileset dir="${absname}">
+				<include name="**" />
+			</fileset>
+			<filterchain>
+				<replacetokens begintoken="##" endtoken="##">
+					<token key="DATE" value="${build.date}" />
+					<token key="VERSION" value="${version}" />
+				</replacetokens>
+			</filterchain>
+		</copy>
+		<mkdir dir="${dirs.release}/${myp}" />
+		<!-- Create the package -->
+		<tar basedir="${dirs.tmp}/${myp}/${dirname}" destfile="${dirs.release}/${myp}/${prefix}${dirname}.tar.gz" includeemptydirs="true" compression="gzip" />
 	</target>
 </project>
