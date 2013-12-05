@@ -24,7 +24,7 @@
 					type="text"
 					label="PLG_CURRENCYCONVERTER_WEBSERVICEX_PARAMETERS_XML_CACHING"
 					description="PLG_CURRENCYCONVERTER_WEBSERVICEX_PARAMETERS_XML_CACHING_DESC"
-					default="0"
+					default="1440"
 					/>
 			</fieldset>
 		</fields>
