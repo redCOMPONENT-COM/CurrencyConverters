@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<extension version="2.5" type="plugin" group="currencyconverter">
+<extension version="2.5" type="plugin" group="currencyconverter" method="upgrade">
 	<name>PLG_CURRENCYCONVERTER_WEBSERVICEX</name>
 	<author>redCOMPONENT</author>
 	<creationDate>November 2013</creationDate>
