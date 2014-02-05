@@ -6,7 +6,7 @@ Each plugin implements the interface with a specific service.
 
 The goal here of course is to provide a unique set of plugins that can be used by any developper that needs currency converting in its joomla extensions.
 
-These plugin **require redCORE library** installed (to check on Currency codes validity)
+These plugin [**require redCORE library**](https://github.com/redCOMPONENT-COM/redCORE) installed (to check on Currency codes validity)
 
 Compatible with Joomla 2.5 and later
 
