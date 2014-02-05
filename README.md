@@ -2,7 +2,13 @@ CurrencyConverters
 ==================
 
 This repository contains joomla currencyconverter type plugins, being used to convert currencies.
-Each plugin implements the interface with a specific service
+Each plugin implements the interface with a specific service.
+
+The goal here of course is to provide a unique set of plugins that can be used by any developper that needs currency converting in its joomla extensions.
+
+These plugin **require redCORE library** installed (to check on Currency codes validity)
+
+Compatible with Joomla 2.5 and later
 
 Implementation
 --------------
