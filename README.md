@@ -20,6 +20,7 @@ preferably, implement some kind of caching too
 
 Usage
 -----
+For developpers
 ```php
   JPluginHelper::importPlugin('currencyconverter');
   $dispatcher = JDispatcher::getInstance();
@@ -27,3 +28,5 @@ Usage
   $price = false;
   $dispatcher->trigger('onCurrencyConvert', array($amount, $currencyFrom, $currencyTo, &$price));
 ```
+
+Then, you can either pack it with your extensions, or have your users to install them themselves.
