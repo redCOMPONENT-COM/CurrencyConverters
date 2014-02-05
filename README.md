@@ -30,3 +30,9 @@ For developpers
 ```
 
 Then, you can either pack it with your extensions, or have your users to install them themselves.
+
+Currently implemented services
+------------------------------
+  * European Central Bank: http://www.ecb.europa.eu/stats/exchange/eurofxref/html/index.en.html
+  * openexchangerates.org: https://openexchangerates.org/
+  * webservicex.net: http://www.webservicex.net
