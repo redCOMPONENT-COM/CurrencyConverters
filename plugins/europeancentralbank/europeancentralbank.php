@@ -35,62 +35,54 @@ class PlgCurrencyConverterEuropeancentralbank extends JPlugin
 	 */
 	public function onCurrencyConvert($amount, $currencyFrom, $currencyTo, &$res)
 	{
-		$redcoreLoader = JPATH_LIBRARIES . '/redcore/bootstrap.php';
+		$this->loadRedcore();
+		$this->validateCurrency($currencyFrom);
+		$this->validateCurrency($currencyTo);
 
-		if (file_exists($redcoreLoader) && !class_exists('Inflector'))
-		{
-			require_once $redcoreLoader;
+		$rate = $this->getRatio($currencyFrom, $currencyTo);
+		$precision = RHelperCurrency::getPrecision($currencyTo);
 
-			// For Joomla! 2.5 compatibility we add some core functions
-			if (version_compare(JVERSION, '3.0', '<'))
-			{
-				RLoader::registerPrefix('J',  JPATH_LIBRARIES . '/redcore/joomla', false, true);
-			}
-
-			// Do the checks
-			$valid = RHelperCurrency::isValid($currencyFrom);
-
-			if (!$valid)
-			{
-				throw new Exception(sprintf('Missing or invalid currency code to convert from (%s)', $currencyFrom));
-			}
-
-			$valid = RHelperCurrency::isValid($currencyTo);
-
-			if (!$valid)
-			{
-				throw new Exception(sprintf('Missing or invalid currency code to convert to (%s)', $currencyTo));
-			}
-		}
-		else
-		{
-			$app = JFactory::getApplication();
-			$app->enqueueMessage('Currency converter skipping checks - install redCORE library to enable code checking');
-		}
-
-		if (!$currencyFrom)
-		{
-			throw new Exception('Missing currency source for conversion');
-		}
-
-		if (!$currencyTo)
-		{
-			throw new Exception('Missing currency target for conversion');
-		}
-
-		if ($currencyFrom == $currencyTo || !$amount)
-		{
-			$res = $amount;
-		}
-
-		$rate = $this->getRate($currencyFrom, $currencyTo);
-		$res = $amount * $rate;
+		$res = round($amount * $rate, $precision);
 
 		return true;
 	}
 
 	/**
-	 * Get the rate
+	 * Load redCORE
+	 *
+	 * @return void
+	 */
+	protected function loadRedcore()
+	{
+		$redcoreLoader = JPATH_LIBRARIES . '/redcore/bootstrap.php';
+
+		if (!file_exists($redcoreLoader) || !JPluginHelper::isEnabled('system', 'redcore'))
+		{
+			$app = JFactory::getApplication();
+			$app->enqueueMessage('Currency converter skipping checks - install redCORE library to enable code checking');
+		}
+
+		// Bootstraps redCORE
+		RBootstrap::bootstrap();
+	}
+
+	/**
+	 * Make sure a currency code is valid
+	 *
+	 * @param   string  $code  currency code to validate
+	 *
+	 * @throws Exception
+	 */
+	protected function validateCurrency($code)
+	{
+		if (!RHelperCurrency::isValid($code))
+		{
+			throw new Exception(sprintf('Missing or invalid currency code to convert from (%s)', $code));
+		}
+	}
+
+	/**
+	 * Get the ratio
 	 *
 	 * @param   string  $currencyFrom  the currency code to convert from
 	 * @param   string  $currencyTo    the currency code to convert to
@@ -99,7 +91,7 @@ class PlgCurrencyConverterEuropeancentralbank extends JPlugin
 	 *
 	 * @return float rate
 	 */
-	protected function getRate($currencyFrom, $currencyTo)
+	protected function getRatio($currencyFrom, $currencyTo)
 	{
 		$caching = (int) $this->params->get('caching', 0);
 		$tmp_path = JFactory::getApplication()->getCfg('tmp_path');

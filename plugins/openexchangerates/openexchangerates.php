@@ -22,6 +22,11 @@ class PlgCurrencyConverterOpenexchangerates extends JPlugin
 	protected $name = 'openexchangerates';
 
 	/**
+	 * @var rates data
+	 */
+	protected $data;
+
+	/**
 	 * Converts an amount between currencies
 	 *
 	 * @param   float   $amount        the amount to convert
@@ -35,125 +40,144 @@ class PlgCurrencyConverterOpenexchangerates extends JPlugin
 	 */
 	public function onCurrencyConvert($amount, $currencyFrom, $currencyTo, &$res)
 	{
-		$redcoreLoader = JPATH_LIBRARIES . '/redcore/bootstrap.php';
+		$this->loadRedcore();
+		$this->validateCurrency($currencyFrom);
+		$this->validateCurrency($currencyTo);
 
-		if (!$this->params->get('appId'))
-		{
-			throw new Exception('Missing appId for openexchangerates currency convertor plugin');
-		}
+		$rate = $this->getRatio($currencyFrom, $currencyTo);
+		$precision = RHelperCurrency::getPrecision($currencyTo);
 
-		if (file_exists($redcoreLoader) && !class_exists('Inflector'))
-		{
-			require_once $redcoreLoader;
-
-			// For Joomla! 2.5 compatibility we add some core functions
-			if (version_compare(JVERSION, '3.0', '<'))
-			{
-				RLoader::registerPrefix('J',  JPATH_LIBRARIES . '/redcore/joomla', false, true);
-			}
-
-			// Do the checks
-			$valid = RHelperCurrency::isValid($currencyFrom);
-
-			if (!$valid)
-			{
-				throw new Exception(sprintf('Missing or invalid currency code to convert from (%s)', $currencyFrom));
-			}
-
-			$valid = RHelperCurrency::isValid($currencyTo);
-
-			if (!$valid)
-			{
-				throw new Exception(sprintf('Missing or invalid currency code to convert to (%s)', $currencyTo));
-			}
-		}
-		else
-		{
-			$app = JFactory::getApplication();
-			$app->enqueueMessage('Currency converter skipping checks - install redCORE library to enable code checking');
-		}
-
-		if (!$currencyFrom)
-		{
-			throw new Exception('Missing currency source for conversion');
-		}
-
-		if (!$currencyTo)
-		{
-			throw new Exception('Missing currency target for conversion');
-		}
-
-		if ($currencyFrom == $currencyTo || !$amount)
-		{
-			$res = $amount;
-		}
-
-		$rate = $this->getRate($currencyFrom, $currencyTo);
-		$res = $amount * $rate;
+		$res = round($amount * $rate, $precision);
 
 		return true;
 	}
 
 	/**
-	 * Get the rate
+	 * Load redCORE
+	 *
+	 * @return void
+	 */
+	protected function loadRedcore()
+	{
+		$redcoreLoader = JPATH_LIBRARIES . '/redcore/bootstrap.php';
+
+		if (!file_exists($redcoreLoader) || !JPluginHelper::isEnabled('system', 'redcore'))
+		{
+			$app = JFactory::getApplication();
+			$app->enqueueMessage('Currency converter skipping checks - install redCORE library to enable code checking');
+		}
+
+		// Bootstraps redCORE
+		RBootstrap::bootstrap();
+	}
+
+	/**
+	 * Make sure a currency code is valid
+	 *
+	 * @param   string  $code  currency code to validate
+	 *
+	 * @return void
+	 *
+	 * @throws Exception
+	 */
+	protected function validateCurrency($code)
+	{
+		if (!RHelperCurrency::isValid($code))
+		{
+			throw new Exception(sprintf('Missing or invalid currency code to convert from (%s)', $code));
+		}
+	}
+
+	/**
+	 * Get the ratio
 	 *
 	 * @param   string  $currencyFrom  the currency code to convert from
 	 * @param   string  $currencyTo    the currency code to convert to
+	 *
+	 * @return float rate
+	 */
+	protected function getRatio($currencyFrom, $currencyTo)
+	{
+		if ($currencyFrom == $currencyTo)
+		{
+			return 1;
+		}
+
+		return $this->getRate($currencyTo) / $this->getRate($currencyFrom);
+	}
+
+	/**
+	 * Get a currency rate
+	 *
+	 * @param   string  $currency  the currency code to convert from
 	 *
 	 * @throws Exception
 	 *
 	 * @return float rate
 	 */
-	protected function getRate($currencyFrom, $currencyTo)
+	protected function getRate($currency)
 	{
-		$caching = (int) $this->params->get('caching', 0);
-		$tmp_path = JFactory::getApplication()->getCfg('tmp_path');
-		$file = $tmp_path . '/openexchangerates/data.txt';
+		$exchangeRates = $this->getRates();
 
-		$appId = $this->params->get('appId');
-
-		if ($caching && is_readable($file) && (time() - filemtime($file) < $caching * 60))
+		if (!isset($exchangeRates->{$currency}))
 		{
-			// Retrieve from cache
-			$json = file_get_contents($file);
+			throw new Exception(sprintf('%s currency is not supported by openexchangerates', $currency));
 		}
-		else
+
+		return (float) $exchangeRates->{$currency};
+	}
+
+	/**
+	 * Fetch data
+	 *
+	 * @return object rates
+	 *
+	 * @throws Exception
+	 */
+	protected function getRates()
+	{
+		if (!$this->data)
 		{
-			$url = "http://openexchangerates.org/api/latest.json?app_id=" . $appId;
+			$caching = (int) $this->params->get('caching', 0);
+			$tmp_path = JFactory::getApplication()->getCfg('tmp_path');
+			$file = $tmp_path . '/openexchangerates/data.txt';
 
-			$ch = curl_init($url);
-			curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-			// Get the data:
-			$json = curl_exec($ch);
-			curl_close($ch);
-
-			if ($caching)
+			if ($caching && is_readable($file) && (time() - filemtime($file) < $caching * 60))
 			{
-				if (file_exists($file))
+				// Retrieve from cache
+				$json = file_get_contents($file);
+			}
+			else
+			{
+				if (!$appId = $this->params->get('appId'))
 				{
-					unlink($file);
+					throw new Exception('Missing appId for openexchangerates currency convertor plugin');
 				}
 
-				JFile::write($file, $json);
+				$url = "http://openexchangerates.org/api/latest.json?app_id=" . $appId;
+
+				$ch = curl_init($url);
+				curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+				// Get the data:
+				$json = curl_exec($ch);
+				curl_close($ch);
+
+				if ($caching)
+				{
+					if (file_exists($file))
+					{
+						unlink($file);
+					}
+
+					JFile::write($file, $json);
+				}
 			}
+
+			// Decode JSON response:
+			$this->data = json_decode($json)->rates;
 		}
 
-		// Decode JSON response:
-		$exchangeRates = json_decode($json)->rates;
-
-		if (!isset($exchangeRates->{$currencyFrom}))
-		{
-			throw new Exception(sprintf('%s currency is not supported by openexchangerates', $currencyFrom));
-		}
-
-		if (!isset($exchangeRates->{$currencyTo}))
-		{
-			throw new Exception(sprintf('%s currency is not supported by openexchangerates', $currencyTo));
-		}
-
-		$rate = ((float) $exchangeRates->{$currencyTo}) / ((float)$exchangeRates->{$currencyFrom});
-
-		return $rate;
+		return $this->data;
 	}
 }
