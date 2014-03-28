@@ -63,8 +63,7 @@ class PlgCurrencyConverterOpenexchangerates extends JPlugin
 
 		if (!file_exists($redcoreLoader) || !JPluginHelper::isEnabled('system', 'redcore'))
 		{
-			$app = JFactory::getApplication();
-			$app->enqueueMessage('Currency converter skipping checks - install redCORE library to enable code checking');
+			throw new RuntimeException('Install redCORE library to enable currency conversion');
 		}
 
 		// Bootstraps redCORE
